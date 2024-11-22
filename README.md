@@ -9,3 +9,16 @@ This repository demonstrates a simple dashboard layout using CSS Grid. The goal 
 
 To add some random content, and for fun, I implemented a simple Wikipedia article viewer that loads articles via the Wikipedia API. In many cases the article will be longer than the `<main>` element’s height, and thus scrolling will be activated. For longer articles with many sections, the dynamic table of contents in the `<aside>` will also scroll.
 
+Here’s an example of a long article:
+
+<https://amundo.github.io/dashboard-layout/#CSS>
+
+In this case both the `<main>` and `<aside>` elements are scrollable.
+
+Most articles will be like this one, where the content is scrollable but the table of contents (`<aside>`) is not:
+
+<https://amundo.github.io/dashboard-layout/#John_F._Ficken>
+
+If the article is very short there might be no scrolling at all
+
+<https://amundo.github.io/dashboard-layout/#Log_Cabin_Stable>
