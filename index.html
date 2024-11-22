@@ -101,7 +101,7 @@ form#fetch-article { display: inline;}
     header.querySelector('h1').textContent = title;
 
     const slugTitle = titleToSlug(title);
-    footer.innerHTML = `This page is loading the content of the Wikipedia article <a href="https://en.wikipedia.org/wiki/${slugTitle}" target="_blank">${slugTitle}</a>. You can also tell it to load a <form id=fetch-article><input name="article-title" placeholder="…specific article title"><button type=submit id="load-article">Load</button></form>.`
+    footer.innerHTML = `This page is loading the content of the Wikipedia article <a href="https://en.wikipedia.org/wiki/${slugTitle}" target="_blank">${slugTitle}</a>. <button id=load-random-article title="Load another random article">🎲</button><br> You can also load a <form id=fetch-article><input name="article-title" placeholder="…specific article title"><button type=submit id="load-article">Load</button></form>.`
 
 
 
@@ -132,10 +132,6 @@ form#fetch-article { display: inline;}
   const main = document.querySelector('main');
   const footer = document.querySelector('footer');
 
-  const init = async () => {
-    const randomArticle = await fetchRandomWikipediaArticle();
-    if (randomArticle) renderArticle(randomArticle);
-  };
 
   // Event listener for loading a specific article
   addEventListener('submit', async (e) => {
@@ -156,9 +152,47 @@ form#fetch-article { display: inline;}
       e.preventDefault()
       document.querySelector('input[name="article-title"]').focus();
     }
-  });
+  })
 
-  init();
+  // load a random article when random button clicked
+  document.addEventListener('click', async (e) => {
+    if (e.target.matches('#load-random-article')) {
+      const randomArticle = await fetchRandomWikipediaArticle();
+      if (randomArticle) renderArticle(randomArticle);
+    }
+  })
+
+// Handle hashchange events
+const handleHashChange = async () => {
+  const articleTitle = decodeURIComponent(location.hash.slice(1)).trim();
+  if (!articleTitle) {
+    console.warn("Hash is empty or invalid.");
+    return;
+  }
+
+  const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(articleTitle)}&format=json&origin=*`;
+  const chosenArticle = await fetchWikipediaArticle(articleUrl);
+  if (chosenArticle) renderArticle(chosenArticle);
+};
+// Add event listener for hash changes
+window.addEventListener("hashchange", handleHashChange);
+
+// Also handle the initial load with a hash
+if (location.hash) {
+  handleHashChange();
+}
+
+// if there is no hash, load a random article
+// otherwise the hashchange event will be triggered
+const initialize = async () => {
+  if (!location.hash) {
+    const randomArticle = await fetchRandomWikipediaArticle();
+    if (randomArticle) renderArticle(randomArticle);
+  }
+};
+
+
+  initialize()
 </script>
 </body>
 </html>
