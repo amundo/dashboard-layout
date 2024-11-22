@@ -159,8 +159,9 @@
     // Make links absolute
     const absolutizeLinks = (dom) => {
       dom.querySelectorAll('a').forEach(a => {
-        if (a.href.startsWith('/wiki/')) {
-          a.href = `https://en.wikipedia.org${a.href}`;
+        if (a.href.startsWith(document.location.origin)) {
+          a.target = '_blank'
+          a.href = a.href.replace(document.location.origin, `https://en.wikipedia.org`)
         }
       });
     };
