@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,39 +6,55 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Wikipedia: </title>
   <link rel="icon"
-    href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'48'%20height%3D'48'%20viewBox%3D'0%200%2016%2016'%3E%3Ctext%20x%3D'0'%20y%3D'14'%3E%F0%9F%93%90%3C%2Ftext%3E%3C%2Fsvg%3E" />
+    href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'48'%20height%3D'48'%20viewBox%3D'0'%200%2016%2016'%3E%3Ctext%20x%3D'0'%20y%3D'14'%3E%F0%9F%93%90%3C%2Ftext%3E%3C%2Fsvg%3E" />
   <style>
-* { box-sizing: border-box; margin: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+    }
 
-html, body  { height: 100%; }
-aside, main { overflow-y: scroll; }
+    html,
+    body {
+      height: 100%;
+    }
 
-body {
-  display: grid;
-  background: hsl(205.3, 100%, 70.3%);
-  padding: 1em;
-  > * {
-    padding: 1em;
-    background: hsl(0, 0%, 100%);
-  }
-  gap: 1em;
-  grid-template: 
-    "header header" auto 
-    "aside  main"   1fr 
-    "footer footer" auto 
-  /  1fr    3fr;
+    aside,
+    main {
+      overflow-y: scroll;
+    }
 
-  header, footer {
-    grid-column: span 2;
-  }
-}
+    body {
+      display: grid;
+      background: hsl(205.3, 100%, 70.3%);
+      padding: 1em;
 
-form#fetch-article { display: inline;}
+      > * {
+        padding: 1em;
+        background: hsl(0, 0%, 100%);
+      }
+
+      gap: 1em;
+      grid-template: 
+        "header header" auto 
+        "aside main" 1fr 
+        "footer footer" auto 
+        / 1fr 3fr;
+
+      header,
+      footer {
+        grid-column: span 2;
+      }
+    }
+
+    form#fetch-article {
+      display: inline;
+    }
   </style>
 </head>
 
 <body>
-  <header><h1></h1>
+  <header>
+    <h1></h1>
   </header>
   <aside>
     <h2>Table of Contents</h2>
@@ -47,164 +63,167 @@ form#fetch-article { display: inline;}
   <main><!-- content will be inserted here --> </main>
   <footer></footer>
 
+  <script type="module">
+    // Utility: Convert title to URL-friendly slug
+    const titleToSlug = (title) => title.replaceAll(' ', '_');
 
-  
-<script type="module">
-  // Fetch data from a given Wikipedia API URL
-  const fetchWikipediaArticle = async (url) => {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Error fetching article: ${response.status}`);
-      }
-      const data = await response.json();
-
-      if (data.parse) {
+    // Fetch data from Wikipedia API
+    const fetchWikipediaArticle = async (url) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Error fetching article: ${response.status}`);
+        }
+        const data = await response.json();
         return {
           title: data.parse.title,
           html: data.parse.text["*"]
         };
-      } else {
-        throw new Error("Unexpected response format");
+      } catch (error) {
+        console.error("Error fetching Wikipedia article:", error);
       }
-    } catch (error) {
-      console.error("Error fetching Wikipedia article:", error);
-    }
-  };
+    };
 
+    // Fetch a random article
+    const fetchRandomWikipediaArticle = async () => {
+      try {
+        const randomUrl = `https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&format=json&origin=*`;
+        const randomResponse = await fetch(randomUrl);
+        const randomData = await randomResponse.json();
+        const randomTitle = randomData.query.random[0].title;
 
-  // Fetch a random article and return its content
-  const fetchRandomWikipediaArticle = async () => {
-    try {
-      const randomUrl =  `https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&format=json&origin=*`
-      const randomResponse = await fetch(randomUrl);
-      const randomData = await randomResponse.json();
-      const randomTitle = randomData.query.random[0].title
+        // Fetch content of the random article
+        const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(randomTitle)}&format=json&origin=*`;
+        return await fetchWikipediaArticle(articleUrl);
+      } catch (error) {
+        console.error("Error fetching random Wikipedia article:", error);
+      }
+    };
 
-      // Use fetchWikipediaArticle to get the random article's content
-      const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(randomTitle)}&format=json&origin=*`;
-      return await fetchWikipediaArticle(articleUrl);
-    } catch (error) {
-      console.error("Error fetching random Wikipedia article:", error);
-    }
-  };
+    // Render article content and update UI
+    const renderArticle = ({ title, html }) => {
+      main.innerHTML = '';
+      aside.querySelector('ol').innerHTML = '';
 
-  // Render article content and update UI
-  const renderArticle = ({ title, html }) => {
-    main.innerHTML = '';
-    aside.querySelector('ol').innerHTML = '';
+      const articleDom = new DOMParser().parseFromString(html, 'text/html');
+      const articleBody = articleDom.querySelector('body');
+      const articleContents = Array.from(articleBody.children);
 
-    const articleDom = new DOMParser().parseFromString(html, 'text/html');
-    const articleBody = articleDom.querySelector('body');
-    const articleContents = Array.from(articleBody.children);
+      absolutizeLinks(articleBody);
 
-    header.querySelector('h1').textContent = title
-    document.title = `Wikipedia: ${title}`
+      header.querySelector('h1').textContent = title;
+      document.title = `Wikipedia: ${title}`;
 
-    const slugTitle = titleToSlug(title);
-    footer.innerHTML = `This page is loading the content of the Wikipedia article <a href="https://en.wikipedia.org/wiki/${slugTitle}" target="_blank">${slugTitle}</a>.
-    <br>Load another random article  <button id=load-random-article title="Load another random article">🎲</button> or load a specific title: <form id=fetch-article><input name="article-title" placeholder="article title"><button type=submit id="load-article">Load</button></form>. <small>Repo at <a href=https://github.com/amundo/dashboard-layout>https://github.com/amundo/dashboard-layout</a></small>`
+      const slugTitle = titleToSlug(title);
+      footer.innerHTML = `
+        This page is loading the Wikipedia article: 
+        <a href="https://en.wikipedia.org/wiki/${slugTitle}" target="_blank">${slugTitle}</a>.
+        <br>Load another random article: 
+        <button id="load-random-article" title="Load another random article">🎲</button> 
+        or load a specific title: 
+        <form id="fetch-article">
+          <input name="article-title" placeholder="Article title">
+          <button type="submit">Load</button>
+        </form>. 
+        <small>Repo at 
+          <a href="https://github.com/amundo/dashboard-layout">GitHub</a>.
+        </small>
+      `;
 
+      articleContents.forEach(node => main.appendChild(node));
 
+      main.querySelectorAll('h2, h3, h4').forEach(h => {
+        const id = h.textContent.toLowerCase().replace(/\s+/g, '-');
+        h.id = id;
 
-    articleContents.forEach(node => main.appendChild(node));
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `#${id}`;
+        a.textContent = h.textContent;
+        li.appendChild(a);
 
-    main.querySelectorAll('h2, h3, h4').forEach(h => {
-      const id = h.textContent.toLowerCase().replace(/\s+/g, '-');
-      h.id = id;
+        aside.querySelector('ol').appendChild(li);
+      });
 
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = `#${id}`;
-      a.textContent = h.textContent;
-      li.appendChild(a);
+      main.querySelectorAll('link, style').forEach(el => el.remove());
 
-      aside.querySelector('ol').appendChild(li);
+      // Update the hash explicitly
+      if (location.hash !== `#${slugTitle}`) {
+        history.pushState(null, "", `#${slugTitle}`);
+      }
+
+      // Scroll to top after rendering
+      setTimeout(() => main.scrollTop = 0, 100);
+    };
+
+    // Make links absolute
+    const absolutizeLinks = (dom) => {
+      dom.querySelectorAll('a').forEach(a => {
+        if (a.href.startsWith('/wiki/')) {
+          a.href = `https://en.wikipedia.org${a.href}`;
+        }
+      });
+    };
+
+    // Handle hash change event
+    const handleHashChange = async () => {
+      const articleTitle = decodeURIComponent(location.hash.slice(1)).trim();
+      if (articleTitle) {
+        const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(articleTitle)}&format=json&origin=*`;
+        const chosenArticle = await fetchWikipediaArticle(articleUrl);
+        if (chosenArticle) renderArticle(chosenArticle);
+      }
+    };
+
+    // Add event listener for hash changes
+    window.addEventListener("hashchange", handleHashChange);
+
+    // Submit event for loading a specific article
+    document.addEventListener('submit', async (e) => {
+      if (e.target.matches('#fetch-article')) {
+        e.preventDefault();
+        const articleTitle = e.target['article-title'].value.trim();
+        if (!articleTitle) return;
+
+        const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(articleTitle)}&format=json&origin=*`;
+        const chosenArticle = await fetchWikipediaArticle(articleUrl);
+        if (chosenArticle) renderArticle(chosenArticle);
+      }
     });
 
-    main.querySelectorAll('link, style').forEach(el => el.remove())
+    // Click event for loading a random article
+    document.addEventListener('click', async (e) => {
+      if (e.target.matches('#load-random-article')) {
+        const randomArticle = await fetchRandomWikipediaArticle();
+        if (randomArticle) renderArticle(randomArticle);
+      }
+    });
 
-    // update hash if necessary
-    if (location.hash !== `#${slugTitle}`) {
-      location.hash = slugTitle;
-    }
+    // Keyboard shortcut for focusing input
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/') {
+        e.preventDefault();
+        document.querySelector('input[name="article-title"]').focus();
+      }
+    });
 
-    // after a short delay make sure the article is scrolled all the way up
-    setTimeout(() => {
-      main.scrollTop = 0;
-    }, 100);
-  };
+    // Initialize app
+    const initialize = async () => {
+      if (!location.hash) {
+        const randomArticle = await fetchRandomWikipediaArticle();
+        if (randomArticle) renderArticle(randomArticle);
+      } else {
+        await handleHashChange();
+      }
+    };
 
-  // Utility function: Convert title to URL-friendly slug
-  const titleToSlug = (title) => title.replaceAll(' ', '_');
+    const header = document.querySelector('header');
+    const aside = document.querySelector('aside');
+    const main = document.querySelector('main');
+    const footer = document.querySelector('footer');
 
-  // Initialize and load a random article on page load
-  const header = document.querySelector('header');
-  const aside = document.querySelector('aside');
-  const main = document.querySelector('main');
-  const footer = document.querySelector('footer');
-
-
-  // Event listener for loading a specific article
-  addEventListener('submit', async (e) => {
-    if (e.target.matches('#fetch-article')) {
-      e.preventDefault();
-      const articleTitle = e.target['article-title'].value.trim();
-      if (!articleTitle) return;
-
-      const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(articleTitle)}&format=json&origin=*`;
-      const chosenArticle = await fetchWikipediaArticle(articleUrl);
-      if (chosenArticle) renderArticle(chosenArticle);
-    }
-  })
-
-  // focus the input field on / key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === '/') {
-      e.preventDefault()
-      document.querySelector('input[name="article-title"]').focus();
-    }
-  })
-
-  // load a random article when random button clicked
-  document.addEventListener('click', async (e) => {
-    if (e.target.matches('#load-random-article')) {
-      const randomArticle = await fetchRandomWikipediaArticle();
-      if (randomArticle) renderArticle(randomArticle);
-    }
-  })
-
-// Handle hashchange events
-const handleHashChange = async () => {
-  const articleTitle = decodeURIComponent(location.hash.slice(1)).trim();
-  if (!articleTitle) {
-    console.warn("Hash is empty or invalid.");
-    return;
-  }
-
-  const articleUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(articleTitle)}&format=json&origin=*`;
-  const chosenArticle = await fetchWikipediaArticle(articleUrl);
-  if (chosenArticle) renderArticle(chosenArticle);
-};
-// Add event listener for hash changes
-window.addEventListener("hashchange", handleHashChange);
-
-// Also handle the initial load with a hash
-if (location.hash) {
-  handleHashChange();
-}
-
-// if there is no hash, load a random article
-// otherwise the hashchange event will be triggered
-const initialize = async () => {
-  if (!location.hash) {
-    const randomArticle = await fetchRandomWikipediaArticle();
-    if (randomArticle) renderArticle(randomArticle);
-  }
-};
-
-
-  initialize()
-</script>
+    initialize();
+  </script>
 </body>
+
 </html>
