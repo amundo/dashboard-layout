@@ -22,3 +22,26 @@ Most articles will be like this one, where the content is scrollable but the tab
 If the article is very short there might be no scrolling at all
 
 <https://amundo.github.io/dashboard-layout/#Log_Cabin_Stable>
+
+
+## `CSS` outline
+
+The basic premise here is encapsulated in these lines:
+
+```css
+
+html, body  { height: 100%; }
+aside, main { overflow-y: scroll; }
+body {
+  display: grid;
+  grid-template: 
+    "header header" auto 
+    "aside  main"   1fr 
+    "footer footer" auto 
+  /  1fr    3fr;
+  header, footer {
+    grid-column: span 2;
+  }
+}
+```
+
